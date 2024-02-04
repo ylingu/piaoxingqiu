@@ -313,6 +313,10 @@ def create_order(
             "one2oneAudiences": [
                 {"audienceId": i, "sessionId": session_id} for i in audience_ids
             ],
+            "many2OneAudience": {
+                "audienceId": audience_ids[0],
+                "sessionIds": [session_id],
+            },
         }
     elif deliver_method == "VENUE_E":
         data = {
