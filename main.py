@@ -24,7 +24,7 @@ while True:
                 if sessions:
                     for i in sessions:
                         if (
-                            i["sessionStatus"] == "ON_SALE"
+                            i["sessionStatus"] == "ON_SALE" or i["sessionStatus"] == "PRE_SALE"
                             and i["bizShowSessionId"] not in session_id_exclude
                         ):
                             session_id = i["bizShowSessionId"]
@@ -34,7 +34,9 @@ while True:
                         break
                     else:
                         print("未获取到在售状态且符合购票数量需求的session_id")
-                        session_id_exclude = []  # 再给自己一次机会，万一被排除掉的场次又放票了呢
+                        session_id_exclude = (
+                            []
+                        )  # 再给自己一次机会，万一被排除掉的场次又放票了呢
         # 获取座位余票信息，默认从最低价开始
         seat_plans = request.get_seat_plans(show_id, session_id)
         seat_count = request.get_seat_count(show_id, session_id)
@@ -56,7 +58,9 @@ while True:
 
         # 如果没有拿到seat_plan_id，说明该场次所有座位的余票都不满足购票数量需求，就重新开始刷下一场次
         if not seat_plan_id:
-            print("该场次" + session_id + "没有符合条件的座位，将为你继续搜寻其他在售场次")
+            print(
+                "该场次" + session_id + "没有符合条件的座位，将为你继续搜寻其他在售场次"
+            )
             session_id_exclude.append(session_id)  # 排除掉这个场次
             session_id = ""
             continue
@@ -125,7 +129,7 @@ while True:
                     location_city_id,
                     audience_ids,
                 )
-            elif deliver_method == "VENUE" or deliver_method == "E_TICKET":
+            elif deliver_method == "VENUE" or deliver_method == "E_TICKET" or deliver_method == "ID_CARD":
                 request.create_order(
                     show_id,
                     session_id,
