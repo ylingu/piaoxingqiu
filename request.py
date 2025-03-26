@@ -1,10 +1,9 @@
-import requests
-
-from config import token
+import aiohttp
+from config import access_token
 
 
 # 根据项目id获取所有场次和在售状态
-def get_sessions(show_id) -> list | None:
+async def get_sessions(show_id) -> list | None:
     headers = {
         "User-Agent": "Mozilla/5.0 (Linux; Android 6.0; Nexus 5 Build/MRA58N) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/86.0.4240.75 Mobile Safari/537.36",
         "Content-Type": "application/json",
@@ -14,16 +13,18 @@ def get_sessions(show_id) -> list | None:
         + show_id
         + "/sessions_dynamic_data"
     )
-    response = requests.get(url=url, headers=headers).json()
-    if response["statusCode"] == 200:
-        return response["data"]["sessionVOs"]
-    else:
-        print("get_sessions异常:" + str(response))
+    async with aiohttp.ClientSession() as session:
+        async with session.get(url=url, headers=headers) as response:
+            response_json = await response.json()
+            if response_json["statusCode"] == 200:
+                return response_json["data"]["sessionVOs"]
+            else:
+                print("get_sessions异常:" + str(response_json))
     return None
 
 
 # 根据场次id获取座位信息
-def get_seat_plans(show_id, session_id) -> list:
+async def get_seat_plans(show_id, session_id) -> list:
     headers = {
         "User-Agent": "Mozilla/5.0 (Linux; Android 6.0; Nexus 5 Build/MRA58N) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/86.0.4240.75 Mobile Safari/537.36",
         "Content-Type": "application/json",
@@ -35,15 +36,17 @@ def get_seat_plans(show_id, session_id) -> list:
         + session_id
         + "/seat_plans_static_data"
     )
-    response = requests.get(url=url, headers=headers).json()
-    if response["statusCode"] == 200:
-        return response["data"]["seatPlans"]
-    else:
-        raise Exception("get_seat_plans异常:" + str(response))
+    async with aiohttp.ClientSession() as session:
+        async with session.get(url=url, headers=headers) as response:
+            response_json = await response.json()
+            if response_json["statusCode"] == 200:
+                return response_json["data"]["seatPlans"]
+            else:
+                raise Exception("get_seat_plans异常:" + str(response_json))
 
 
 # 获取座位余票
-def get_seat_count(show_id, session_id) -> list:
+async def get_seat_count(show_id, session_id) -> list:
     headers = {
         "User-Agent": "Mozilla/5.0 (Linux; Android 6.0; Nexus 5 Build/MRA58N) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/86.0.4240.75 Mobile Safari/537.36",
         "Content-Type": "application/json",
@@ -55,19 +58,23 @@ def get_seat_count(show_id, session_id) -> list:
         + session_id
         + "/seat_plans_dynamic_data"
     )
-    response = requests.get(url=url, headers=headers).json()
-    if response["statusCode"] == 200:
-        return response["data"]["seatPlans"]
-    else:
-        raise Exception("get_seat_count异常:" + str(response))
+    async with aiohttp.ClientSession() as session:
+        async with session.get(url=url, headers=headers) as response:
+            response_json = await response.json()
+            if response_json["statusCode"] == 200:
+                return response_json["data"]["seatPlans"]
+            else:
+                raise Exception("get_seat_count异常:" + str(response_json))
 
 
 # 获取门票类型（快递送票EXPRESS,电子票E_TICKET,现场取票VENUE,电子票或现场取票VENUE_E）
-def get_deliver_method(show_id, session_id, seat_plan_id, price: int, qty: int) -> str:
+async def get_deliver_method(
+    show_id, session_id, seat_plan_id, price: int, qty: int
+) -> str:
     headers = {
         "User-Agent": "Mozilla/5.0 (Linux; Android 6.0; Nexus 5 Build/MRA58N) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/86.0.4240.75 Mobile Safari/537.36",
         "Content-Type": "application/json",
-        "access-token": token,
+        "access-token": access_token,
     }
     data = {
         "items": [
@@ -88,55 +95,61 @@ def get_deliver_method(show_id, session_id, seat_plan_id, price: int, qty: int) 
         ]
     }
     url = "https://m.piaoxingqiu.com/cyy_gatewayapi/trade/buyer/order/v3/pre_order"
-    response = requests.post(url=url, headers=headers, json=data).json()
-    if response["statusCode"] == 200:
-        return response["data"]["supportDeliveries"][0]["name"]
-    else:
-        raise Exception("获取门票类型异常:" + str(response))
+    async with aiohttp.ClientSession() as session:
+        async with session.post(url=url, headers=headers, json=data) as response:
+            response_json = await response.json()
+            if response_json["statusCode"] == 200:
+                return response_json["data"]["supportDeliveries"][0]["name"]
+            else:
+                raise Exception("获取门票类型异常:" + str(response_json))
 
 
 # 获取观演人信息
-def get_audiences() -> list | None:
+async def get_audiences() -> list | None:
     headers = {
         "User-Agent": "Mozilla/5.0 (Linux; Android 6.0; Nexus 5 Build/MRA58N) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/86.0.4240.75 Mobile Safari/537.36",
         "Content-Type": "application/json",
-        "access-token": token,
+        "access-token": access_token,
     }
     url = "https://m.piaoxingqiu.com/cyy_gatewayapi/user/buyer/v3/user_audiences"
-    response = requests.get(url=url, headers=headers).json()
-    if response["statusCode"] == 200:
-        return response["data"]
-    else:
-        print("get_audiences异常:" + str(response))
+    async with aiohttp.ClientSession() as session:
+        async with session.get(url=url, headers=headers) as response:
+            response_json = await response.json()
+            if response_json["statusCode"] == 200:
+                return response_json["data"]
+            else:
+                print("get_audiences异常:" + str(response_json))
     return None
 
 
 # 获取收货地址
-def get_address() -> dict | None:
+async def get_address() -> dict | None:
     headers = {
         "User-Agent": "Mozilla/5.0 (Linux; Android 6.0; Nexus 5 Build/MRA58N) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/86.0.4240.75 Mobile Safari/537.36",
         "Content-Type": "application/json",
-        "access-token": token,
+        "access-token": access_token,
     }
     url = (
         "https://m.piaoxingqiu.com/cyy_gatewayapi/user/buyer/v3/user/addresses/default"
     )
-    response = requests.get(url=url, headers=headers).json()
-    if response["statusCode"] == 200:
-        return response["data"]
-    else:
-        print("get_address异常:" + str(response))
+    async with aiohttp.ClientSession() as session:
+        async with session.get(url=url, headers=headers) as response:
+            response_json = await response.json()
+            if response_json["statusCode"] == 200:
+                return response_json["data"]
+            else:
+                print("get_address异常:" + str(response_json))
     return None
 
 
 # 获取快递费
-def get_express_fee(
+async def get_express_fee(
     show_id, session_id, seat_plan_id, price: int, qty: int, location_city_id: str
 ) -> dict:
     headers = {
         "User-Agent": "Mozilla/5.0 (Linux; Android 6.0; Nexus 5 Build/MRA58N) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/86.0.4240.75 Mobile Safari/537.36",
         "Content-Type": "application/json",
-        "access-token": token,
+        "access-token": access_token,
     }
     data = {
         "items": [
@@ -159,15 +172,17 @@ def get_express_fee(
         "locationCityId": location_city_id,  # 460102
     }
     url = "https://m.piaoxingqiu.com/cyy_gatewayapi/trade/buyer/order/v3/price_items"
-    response = requests.post(url=url, headers=headers, json=data).json()
-    if response["statusCode"] == 200:
-        return response["data"][0]
-    else:
-        raise Exception("获取快递费异常:" + str(response))
+    async with aiohttp.ClientSession() as session:
+        async with session.post(url=url, headers=headers, json=data) as response:
+            response_json = await response.json()
+            if response_json["statusCode"] == 200:
+                return response_json["data"][0]
+            else:
+                raise Exception("获取快递费异常:" + str(response_json))
 
 
 # 提交订单（快递送票EXPRESS,电子票E_TICKET,现场取票VENUE,电子票或现场取票VENUE_E）
-def create_order(
+async def create_order(
     show_id,
     session_id,
     seat_plan_id,
@@ -185,7 +200,7 @@ def create_order(
     headers = {
         "User-Agent": "Mozilla/5.0 (Linux; Android 6.0; Nexus 5 Build/MRA58N) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/86.0.4240.75 Mobile Safari/537.36",
         "Content-Type": "application/json",
-        "access-token": token,
+        "access-token": access_token,
     }
     if deliver_method == "EXPRESS":
         data = {
@@ -354,8 +369,10 @@ def create_order(
 
     url = "https://m.piaoxingqiu.com/cyy_gatewayapi/trade/buyer/order/v3/create_order"
     print(data)
-    response = requests.post(url=url, headers=headers, json=data).json()
-    if response["statusCode"] == 200:
-        print("下单成功！请尽快支付！")
-    else:
-        raise Exception("下单异常:" + str(response))
+    async with aiohttp.ClientSession() as session:
+        async with session.post(url=url, headers=headers, json=data) as response:
+            response_json = await response.json()
+            if response_json["statusCode"] == 200:
+                print("下单成功！请尽快支付！")
+            else:
+                raise Exception("下单异常:" + str(response_json))
